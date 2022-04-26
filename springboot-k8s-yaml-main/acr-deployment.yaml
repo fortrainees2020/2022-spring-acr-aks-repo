@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment # Kubernetes resource kind we are creating
+metadata:
+  name: spring-boot-k8s
+spec:
+  selector:
+    matchLabels:
+      app: spring-boot-k8s
+  replicas: 2 # Number of replicas that will be created for this deployment
+  template:
+    metadata:
+      labels:
+        app: spring-boot-k8s
+
+    spec:
+      containers:
+        - name: spring-boot-k8s
+          image: springacrakscontainerresgistrynew.azurecr.io/spring-boot-k8s.io:1.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8082 # The port that the container is running on in the cluster
+---
+apiVersion: v1 # Kubernetes API version
+kind: Service # Kubernetes resource kind we are creating
+metadata: # Metadata of the resource kind we are creating
+  name: springboot-k8s-svc
+spec:
+  selector:
+    app: spring-boot-k8s
+   
+  ports:
+    - protocol: "TCP"
+      port: 32000 # The port that the service is running on in the cluster
+      targetPort: 8082 # The port exposed by the service
+      name: http
+  type: LoadBalancer # type ospring-
+  
+---
+ # https://docs.microsoft.com/en-us/azure/aks/http-application-routing
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: springboot-k8s-ingress
+  annotations:
+    kubernetes.io/ingress.class: addon-http-application-routing
+spec:
+  rules:
+  - host: springboot-k8s.493189b569724406b0ad.eastus.aksapp.io
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service: 
+            name: springboot-k8s-svc
+            port: 
+              number: 32000
